@@ -5,7 +5,7 @@ services:
   mail-gateway:
     build:
       context: .
-    image: servercontainers/mail-gateway
+    image: dylangmiles/mail-gateway
     restart: always
     environment:
       MAIL_FQDN: mail-security-scanner-gateway

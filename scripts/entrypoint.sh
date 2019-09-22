@@ -260,6 +260,17 @@ EOF
     postmap /etc/postfix/additional/transport
     postconf -e "transport_maps = hash:/etc/postfix/additional/transport"
   fi
+  
+  if [ -f /etc/postfix/additional/sasl_passwords ]; then
+    echo ">> POSTFIX found 'additional/sasl_passwords' activating it as sasl_passwords"
+    postmap /etc/postfix/additional/sasl_passwords
+    
+    postconf -e "smtp_use_tls=yes"
+    postconf -e "smtp_sasl_auth_enable = yes"
+    postconf -e "smtp_sasl_security_options ="
+    
+    postconf -e "smtp_sasl_password_maps = hash:/etc/postfix/additional/sasl_passwords"
+  fi
 
   if [ -f /etc/postfix/additional/header_checks ]; then
     echo ">> POSTFIX found 'additional/header_checks' activating it as header_checks"
