@@ -60,6 +60,7 @@ if [ ! -f "$INITIALIZED" ]; then
   echo "$MAIL_FQDN" > /etc/mailname
   echo "$MAIL_NAME" > /etc/hostname
   postconf -e "myhostname=$MAIL_FQDN"
+  postconf -e "myorigin=$MAILDOMAIN"
 
   if [ -z ${POSTFIX_SMTPD_BANNER+x} ]; then
     POSTFIX_SMTPD_BANNER="$MAIL_FQDN ESMTP"
@@ -248,6 +249,7 @@ EOF
   if [ ! -z ${POSTFIX_RELAY_DOMAINS+x} ]; then
     echo ">> POSTFIX set relay_domains = $POSTFIX_RELAY_DOMAINS"
     postconf -e "relay_domains=$POSTFIX_RELAY_DOMAINS"
+    postconf -e "parent_domain_matches_subdomains = debug_peer_list smtpd_access_maps"
   fi
 
   if [ -d /etc/postfix/additional/opendkim ]; then
@@ -271,11 +273,26 @@ EOF
     
     postconf -e "smtp_sasl_password_maps = hash:/etc/postfix/additional/sasl_passwords"
   fi
+  
+  
+   if [ -f /etc/postfix/additional/virtual ]; then
+    echo ">> POSTFIX found 'additional/virtual' activating it as virtual"
+    postmap /etc/postfix/additional/virtual
+    
+    postconf -e "virtual_alias_maps = hash:/etc/postfix/additional/virtual"
+  fi
 
   if [ -f /etc/postfix/additional/header_checks ]; then
     echo ">> POSTFIX found 'additional/header_checks' activating it as header_checks"
     postconf -e "header_checks = regexp:/etc/postfix/additional/header_checks"
   fi
+ 
+  if [ -f /etc/postfix/additional/stunnel ]; then
+    echo ">> STUNNEL found 'additional/stunnel' copy to /etc/ssl/stunnel/stunnel.conf"
+    mkdir -p /etc/ssl/stunnel
+    cat /etc/postfix/additional/stunnel >> /etc/ssl/stunnel/stunnel.conf
+  fi 
+ 
 
   ##
   # POSTFIX RAW Config ENVs
@@ -297,7 +314,7 @@ EOF
   #
 
   echo ">> RUNIT - create services"
-  mkdir -p /etc/sv/rsyslog /etc/sv/postfix /etc/sv/opendkim /etc/sv/amavis /etc/sv/clamd /etc/sv/freshclam
+  mkdir -p /etc/sv/rsyslog /etc/sv/postfix /etc/sv/opendkim /etc/sv/amavis /etc/sv/clamd /etc/sv/freshclam /etc/sv/stunnel
   echo -e '#!/bin/sh\nexec /usr/sbin/rsyslogd -n' > /etc/sv/rsyslog/run
     echo -e '#!/bin/sh\nrm /var/run/rsyslogd.pid' > /etc/sv/rsyslog/finish
   echo -e '#!/bin/sh\nexec  /usr/sbin/opendkim -f -x /etc/opendkim.conf -u opendkim -P /var/run/opendkim/opendkim.pid -p inet:8891@localhost | logger -t opendkim' > /etc/sv/opendkim/run
@@ -307,9 +324,16 @@ EOF
     echo -e '#!/bin/sh\nservice postfix stop' > /etc/sv/postfix/finish
   echo -e '#!/bin/sh\nexec /usr/sbin/clamd --foreground=true | logger -t clamd' > /etc/sv/clamd/run
   echo -e '#!/bin/sh\nexec freshclam -d --foreground=true | logger -t freshclam' > /etc/sv/freshclam/run
+  echo -e '#!/bin/sh\nexec stunnel /etc/ssl/stunnel/stunnel.conf | logger -t stunnel' > /etc/sv/stunnel/run
+    echo -e '#!/bin/sh\nrm /var/run/stunnel.pid' > /etc/sv/stunnel/finish
   chmod a+x /etc/sv/*/run /etc/sv/*/finish
 
   echo ">> RUNIT - enable services"
+  
+  if [ -f /etc/postfix/additional/stunnel ]; then
+    ln -s /etc/sv/stunnel /etc/service/stunnel
+  fi
+  
   ln -s /etc/sv/postfix /etc/service/postfix
   ln -s /etc/sv/rsyslog /etc/service/rsyslog
 
