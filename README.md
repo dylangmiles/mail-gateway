@@ -139,6 +139,23 @@ _for example: to set_ ___mynetworks_style = subnet___ _just add a environment va
         - opendkim (folder - enables opendkim support if it exists - but needs __DKIM\_DOMAINS__ env)
         - transport (postfix transport text-file - without been postmaped)
         - header_checks (postfix header_checks regex file)
+        - stunnel ( an stunnel configuration file for TLS connection on port 465 )
+        
+        
+## stunnel configuration example
+
+```
+
+debug = 5
+client = yes
+foreground = yes
+pid = /var/run/stunnel.pid
+
+[smtps]
+accept = 5000
+connect = mail1.example.com:465
+
+```        
 
 # Cheat Sheet
 

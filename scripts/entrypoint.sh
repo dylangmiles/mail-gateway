@@ -185,6 +185,13 @@ EOF
 
   if [[ -f "$POSTFIX_SSL_IN_CERT" && -f "$POSTFIX_SSL_IN_KEY" ]]; then
     echo ">> POSTFIX SSL - enabling incoming SSL"
+    
+cat <<EOF >> /etc/postfix/master.cf
+### enable port 587 submissions ###
+submission inet n - - - - smtpd
+EOF
+
+    
 cat <<EOF >> /etc/postfix/main.cf
 ### incoming connections ###
 # smtpd_tls_security_level=encrypt # for secure connections only
