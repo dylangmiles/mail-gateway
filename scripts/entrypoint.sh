@@ -171,11 +171,11 @@ EOF
   fi
 
   if [ -z ${POSTFIX_SSL_IN_CERT+x} ]; then
-    POSTFIX_SSL_IN_CERT="/etc/postfix/tls/bundle.crt"
+    POSTFIX_SSL_IN_CERT="/etc/postfix/tls/server.crt"
   fi
 
   if [ -z ${POSTFIX_SSL_IN_KEY+x} ]; then
-    POSTFIX_SSL_IN_KEY="/etc/postfix/tls/cert.key"
+    POSTFIX_SSL_IN_KEY="/etc/postfix/tls/server.key"
   fi
 
   if [ -z ${POSTFIX_SSL_IN_SECURITY_LEVEL+x} ]; then

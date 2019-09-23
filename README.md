@@ -87,10 +87,10 @@ __OFFICIAL ENVIRONMENT VARIABLES__
 
 - POSTFIX_SSL_IN_CERT
     - path to SSL Cert/Bundle (incoming connections)
-    - default: _/etc/postfix/tls/bundle.crt_
+    - default: _/etc/postfix/tls/server.crt_
 - POSTFIX_SSL_IN_KEY
     - path to SSL Cert key (incoming connections)
-    - default: _/etc/postfix/tls/cert.key_
+    - default: _/etc/postfix/tls/server.key_
 - POSTFIX_SSL_IN_SECURITY_LEVEL
     - SSL security level for incoming connections
     - default: _may_
