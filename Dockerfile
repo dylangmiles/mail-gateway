@@ -13,6 +13,8 @@ RUN apt-get -q -y update \
                           \
                           opendkim \
                           opendkim-tools \
+                          stunnel \
+                          
  && apt-get -q -y clean \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
  \
