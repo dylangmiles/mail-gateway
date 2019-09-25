@@ -315,6 +315,21 @@ EOF
       echo "$CONFD_CONF_VALUE" >> /etc/postfix/main.cf
     done
   fi
+  
+  
+  ##
+  # SPF
+  ##
+ 
+  cat <<EOF >> /etc/postfix/master.cf
+### enable spf policy  
+policyd-spf  unix  -       n       n       -       0       spawn
+    user=policyd-spf argv=/usr/bin/policyd-spf
+EOF
+
+  postconf -e policyd-spf_time_limit=3600
+  postconf -e "smtpd_recipient_restrictions=permit_mynetworks,permit_tls_all_clientcerts,reject_unauth_destination,check_policy_service unix:private/policyd-spf"
+   
 
   #
   # RUNIT
