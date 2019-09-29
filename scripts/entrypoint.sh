@@ -7,6 +7,7 @@
 # cleanup/remove amavis pidfile
 rm -f /run/amavis/amavisd.pid 2> /dev/null > /dev/null
 
+SMTPD_RECIPIENT_RESTRICTIONS="permit_mynetworks,reject"
 AVAILABLE_NETWORKS="127.0.0.0/8"
 if [ ! -z ${AUTO_TRUST_NETWORKS+x} ]; then
   AVAILABLE_NETWORKS=$(list-available-networks.sh | tr '\n' ',' | sed 's/,$//g')
@@ -67,6 +68,20 @@ if [ ! -f "$INITIALIZED" ]; then
   fi
   echo ">> POSTFIX set smtpd_banner = $POSTFIX_SMTPD_BANNER"
   postconf -e "smtpd_banner=$POSTFIX_SMTPD_BANNER"
+  
+  ##
+  # SPF enable
+  ##
+  if [ -z ${DISABLE_SPF_CHECKS+x} ]; then
+    echo ">> POSTFIX enable spf policy check"
+
+cat <<EOF >> /etc/postfix/master.cf
+### enable spf policy  
+policyd-spf  unix  -       n       n       -       0       spawn
+    user=policyd-spf argv=/usr/bin/policyd-spf
+EOF
+
+  fi  
 
   if [ -z ${DISABLE_AMAVIS+x} ]; then
     echo ">> AMAVIS - enabling spam/virus scanning"
@@ -213,8 +228,9 @@ EOF
   if [ -f /etc/postfix/tls/rootCA.crt ]; then
     echo ">> POSTFIX SSL - enabling CA based Client Authentication"
     postconf -e smtpd_tls_ask_ccert=yes
-    postconf -e smtpd_tls_CAfile=/etc/postfix/tls/rootCA.crt
-    postconf -e smtpd_recipient_restrictions=permit_mynetworks,permit_tls_all_clientcerts,reject_unauth_destination
+    postconf -e smtpd_tls_CAfile=/etc/postfix/tls/rootCA.crt 
+    SMTPD_RECIPIENT_RESTRICTIONS="smtpd_recipient_restrictions=permit_mynetworks,permit_tls_all_clientcerts,reject_unauth_destination"
+    
   fi
 
   if [ ! -z ${POSTFIX_SSL_IN_CERT_FINGERPRINTS+x} ] || [ -f /etc/postfix/tls/relay_clientcerts ]; then
@@ -225,7 +241,7 @@ EOF
     postmap /etc/postfix/tls/relay_clientcerts
     postconf -e smtpd_tls_ask_ccert=yes
     postconf -e relay_clientcerts=hash:/etc/postfix/tls/relay_clientcerts
-    postconf -e smtpd_recipient_restrictions=permit_mynetworks,permit_tls_all_clientcerts,reject_unauth_destination
+    SMTPD_RECIPIENT_RESTRICTIONS="smtpd_recipient_restrictions=permit_mynetworks,permit_tls_all_clientcerts,reject_unauth_destination"
   fi
 
   if [ -f /etc/postfix/tls/dh1024.pem ]; then
@@ -316,20 +332,24 @@ EOF
     done
   fi
   
-  
-  ##
-  # SPF
-  ##
- 
-  cat <<EOF >> /etc/postfix/master.cf
-### enable spf policy  
-policyd-spf  unix  -       n       n       -       0       spawn
-    user=policyd-spf argv=/usr/bin/policyd-spf
-EOF
 
-  postconf -e policyd-spf_time_limit=3600
-  postconf -e "smtpd_recipient_restrictions=permit_mynetworks,permit_tls_all_clientcerts,reject_unauth_destination,check_policy_service unix:private/policyd-spf"
-   
+  ##
+  # SPF restrictions
+  # Need to do this after setting other recipient restrictions.
+  ##
+  if [ -z ${DISABLE_SPF_CHECKS+x} ]; then
+    echo ">> POSTFIX add spf check to recipient restrictions."
+    postconf -e policyd-spf_time_limit=3600
+    SMTPD_RECIPIENT_RESTRICTIONS="$SMTPD_RECIPIENT_RESTRICTIONS,check_policy_service unix:private/policyd-spf"
+  fi
+  
+  #cat <<EOF >> /etc/postfix/main.cf
+### Recipient restrictions ###
+#$SMTPD_RECIPIENT_RESTRICTIONS
+#EOF
+
+  postconf -e "$SMTPD_RECIPIENT_RESTRICTIONS"
+
 
   #
   # RUNIT

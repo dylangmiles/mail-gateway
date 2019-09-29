@@ -11,10 +11,14 @@ RUN apt-get -q -y update \
                           clamav clamav-daemon amavisd-new spamassassin razor pyzor \
                           arj bzip2 cabextract cpio file gzip nomarch pax unzip zoo zip zoo \
                           \
+                          libmail-spf-perl \
+                          postfix-policyd-spf-perl \
+                          \
                           opendkim \
                           opendkim-tools \
+                          \
                           stunnel \
-                          postfix-policyd-spf-python \
+                          \
  && apt-get -q -y clean \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
  \
