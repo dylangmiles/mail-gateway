@@ -78,7 +78,7 @@ if [ ! -f "$INITIALIZED" ]; then
 cat <<EOF >> /etc/postfix/master.cf
 ### enable spf policy  
 policyd-spf  unix  -       n       n       -       0       spawn
-    user=policyd-spf argv=/usr/bin/policyd-spf
+    user=policyd-spf argv=/usr/sbin/postfix-policyd-spf-perl
 EOF
 
   fi  
