@@ -8,11 +8,11 @@ RUN apt-get -q -y update \
                           net-tools \
                           postfix \
                           rsyslog \
-                          clamav clamav-daemon amavisd-new spamassassin razor pyzor \
+                          clamav clamav-daemon amavisd-new spamassassin \
                           arj bzip2 cabextract cpio file gzip nomarch pax unzip zoo zip zoo \
                           \
-                          libmail-spf-perl \
-                          postfix-policyd-spf-perl \
+                          libnet-dns-perl libmail-spf-perl postfix-policyd-spf-perl \
+                          razor pyzor\
                           \
                           opendkim \
                           opendkim-tools \

@@ -343,10 +343,7 @@ EOF
     SMTPD_RECIPIENT_RESTRICTIONS="$SMTPD_RECIPIENT_RESTRICTIONS,check_policy_service unix:private/policyd-spf"
   fi
   
-  #cat <<EOF >> /etc/postfix/main.cf
-### Recipient restrictions ###
-#$SMTPD_RECIPIENT_RESTRICTIONS
-#EOF
+  
 
   postconf -e "$SMTPD_RECIPIENT_RESTRICTIONS"
 
