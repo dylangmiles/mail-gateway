@@ -314,6 +314,13 @@ EOF
     echo ">> STUNNEL found 'additional/stunnel' copy to /etc/ssl/stunnel/stunnel.conf"
     mkdir -p /etc/ssl/stunnel
     cat /etc/postfix/additional/stunnel >> /etc/ssl/stunnel/stunnel.conf
+  fi
+  
+  if [ -f /etc/postfix/additional/amavis-50-user ]; then
+    echo ">> AMAVIS found 'additional/amavis-50-user' activating it /etc/amavis/conf.d/50-user"
+    
+    cp -f /etc/postfix/additional/amavis-50-user  /etc/amavis/conf.d/50-user
+    
   fi 
  
 
@@ -332,7 +339,16 @@ EOF
     done
   fi
   
-
+  
+  ## Postgrey
+  if [ -z ${DISABLE_POSTGREY+x} ]; then
+    echo ">> POSTGREY add post grey into receipient restrictions." 
+    SMTPD_RECIPIENT_RESTRICTIONS="$SMTPD_RECIPIENT_RESTRICTIONS,check_policy_service inet:127.0.0.1:10023"
+  fi
+  
+    
+  
+  
   ##
   # SPF restrictions
   # Need to do this after setting other recipient restrictions.
@@ -344,6 +360,18 @@ EOF
   fi
   
   
+  ##
+  # Black lists
+  ##
+  if [ -z ${DISABLE_BLACKLISTSx} ]; then
+    echo ">> POSTFIX black list check to recipient restrictions."
+    SMTPD_RECIPIENT_RESTRICTIONS="$SMTPD_RECIPIENT_RESTRICTIONS,reject_rbl_client sbl-xbl.spamhaus.org"
+  fi
+  
+  #
+  # Permit at the end
+  #
+  SMTPD_RECIPIENT_RESTRICTIONS="$SMTPD_RECIPIENT_RESTRICTIONS,permit"
 
   postconf -e "$SMTPD_RECIPIENT_RESTRICTIONS"
 
@@ -353,7 +381,7 @@ EOF
   #
 
   echo ">> RUNIT - create services"
-  mkdir -p /etc/sv/rsyslog /etc/sv/postfix /etc/sv/opendkim /etc/sv/amavis /etc/sv/clamd /etc/sv/freshclam /etc/sv/stunnel
+  mkdir -p /etc/sv/rsyslog /etc/sv/postfix /etc/sv/opendkim /etc/sv/amavis /etc/sv/clamd /etc/sv/freshclam /etc/sv/stunnel /etc/sv/postgrey
   echo -e '#!/bin/sh\nexec /usr/sbin/rsyslogd -n' > /etc/sv/rsyslog/run
     echo -e '#!/bin/sh\nrm /var/run/rsyslogd.pid' > /etc/sv/rsyslog/finish
   echo -e '#!/bin/sh\nexec  /usr/sbin/opendkim -f -x /etc/opendkim.conf -u opendkim -P /var/run/opendkim/opendkim.pid -p inet:8891@localhost | logger -t opendkim' > /etc/sv/opendkim/run
@@ -365,6 +393,8 @@ EOF
   echo -e '#!/bin/sh\nexec freshclam -d --foreground=true | logger -t freshclam' > /etc/sv/freshclam/run
   echo -e '#!/bin/sh\nexec stunnel /etc/ssl/stunnel/stunnel.conf | logger -t stunnel' > /etc/sv/stunnel/run
     echo -e '#!/bin/sh\nrm /var/run/stunnel.pid' > /etc/sv/stunnel/finish
+  echo -e '#!/bin/sh\nexec /usr/sbin/postgrey --inet=127.0.0.1:10023 --delay=60' > /etc/sv/postgrey/run
+    
   chmod a+x /etc/sv/*/run /etc/sv/*/finish
 
   echo ">> RUNIT - enable services"
@@ -387,6 +417,10 @@ EOF
       ln -s /etc/sv/clamd /etc/service/clamd
       ln -s /etc/sv/freshclam /etc/service/freshclam
     fi
+  fi
+  
+  if [ -z ${DISABLE_POSTGREY+x} ]; then
+    ln -s /etc/sv/postgrey /etc/service/postgrey
   fi
 
 fi

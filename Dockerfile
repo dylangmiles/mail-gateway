@@ -17,6 +17,8 @@ RUN apt-get -q -y update \
                           opendkim \
                           opendkim-tools \
                           \
+                          postgrey \
+                          \
                           stunnel \
                           \
  && apt-get -q -y clean \
@@ -52,6 +54,13 @@ RUN service clamav-daemon restart \
 #
 
 RUN su - amavis -s /bin/bash -c 'razor-admin -create; razor-admin -register; pyzor discover'
+
+
+#
+# postgreay configuration
+#
+#RUN echo 'POSTGREY_OPTS="--inet=10023 --delay=60"' >> /etc/default/postgrey
+
 
 #
 # Relay Configuration
