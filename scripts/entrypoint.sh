@@ -322,6 +322,13 @@ EOF
     cp -f /etc/postfix/additional/amavis-50-user  /etc/amavis/conf.d/50-user
     
   fi 
+  
+  if [ -f /etc/postfix/additional/sender_access ]; then
+    echo ">> POSTFIX found 'additional/sender_access' activating it as sender_access"
+    postmap /etc/postfix/additional/sender_access
+    
+    SMTPD_RECIPIENT_RESTRICTIONS="$SMTPD_RECIPIENT_RESTRICTIONS,check_sender_access hash:/etc/postfix/additional/sender_access"
+  fi
  
 
   ##
