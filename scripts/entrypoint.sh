@@ -390,9 +390,10 @@ EOF
   #
   POSTGREYCMD='#!/bin/sh\nexec /usr/sbin/postgrey --inet=127.0.0.1:10023 --delay=60'
   if [ -f /etc/postfix/additional/postgrey_whitelist_clients ]; then
-    echo ">> POSTFIX found 'additional/postgrey_whitelist_clients' activating it as postgrey_whitelist_clients"
+    echo ">> POSTGREY found 'additional/postgrey_whitelist_clients' activating it as postgrey_whitelist_clients"
     
-    POSTGREYCMD="$POSTGREYCMD --whitelist-clients=/etc/postfix/additional/postgrey_whitelist_clients"        
+    POSTGREYCMD="$POSTGREYCMD --whitelist-clients=/etc/postfix/additional/postgrey_whitelist_clients"
+    
   fi
 
   echo ">> RUNIT - create services"
@@ -408,7 +409,7 @@ EOF
   echo -e '#!/bin/sh\nexec freshclam -d --foreground=true | logger -t freshclam' > /etc/sv/freshclam/run
   echo -e '#!/bin/sh\nexec stunnel /etc/ssl/stunnel/stunnel.conf | logger -t stunnel' > /etc/sv/stunnel/run
     echo -e '#!/bin/sh\nrm /var/run/stunnel.pid' > /etc/sv/stunnel/finish
-  echo -e "'$POSTGREYCMD'" > /etc/sv/postgrey/run
+  echo -e $POSTGREYCMD > /etc/sv/postgrey/run
     
   chmod a+x /etc/sv/*/run /etc/sv/*/finish
 
