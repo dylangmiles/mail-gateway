@@ -329,6 +329,7 @@ EOF
     
     SMTPD_RECIPIENT_RESTRICTIONS="$SMTPD_RECIPIENT_RESTRICTIONS,check_sender_access hash:/etc/postfix/additional/sender_access"
   fi
+  
  
 
   ##
@@ -381,11 +382,18 @@ EOF
   SMTPD_RECIPIENT_RESTRICTIONS="$SMTPD_RECIPIENT_RESTRICTIONS,permit"
 
   postconf -e "$SMTPD_RECIPIENT_RESTRICTIONS"
-
-
+  
+  
+  
   #
   # RUNIT
   #
+  POSTGREYCMD='#!/bin/sh\nexec /usr/sbin/postgrey --inet=127.0.0.1:10023 --delay=60'
+  if [ -f /etc/postfix/additional/postgrey_whitelist_clients ]; then
+    echo ">> POSTFIX found 'additional/postgrey_whitelist_clients' activating it as postgrey_whitelist_clients"
+    
+    POSTGREYCMD="$POSTGREYCMD --whitelist-clients=/etc/postfix/additional/postgrey_whitelist_clients"        
+  fi
 
   echo ">> RUNIT - create services"
   mkdir -p /etc/sv/rsyslog /etc/sv/postfix /etc/sv/opendkim /etc/sv/amavis /etc/sv/clamd /etc/sv/freshclam /etc/sv/stunnel /etc/sv/postgrey
@@ -400,7 +408,7 @@ EOF
   echo -e '#!/bin/sh\nexec freshclam -d --foreground=true | logger -t freshclam' > /etc/sv/freshclam/run
   echo -e '#!/bin/sh\nexec stunnel /etc/ssl/stunnel/stunnel.conf | logger -t stunnel' > /etc/sv/stunnel/run
     echo -e '#!/bin/sh\nrm /var/run/stunnel.pid' > /etc/sv/stunnel/finish
-  echo -e '#!/bin/sh\nexec /usr/sbin/postgrey --inet=127.0.0.1:10023 --delay=60' > /etc/sv/postgrey/run
+  echo -e "'$POSTGREYCMD'" > /etc/sv/postgrey/run
     
   chmod a+x /etc/sv/*/run /etc/sv/*/finish
 
