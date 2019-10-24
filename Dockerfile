@@ -44,10 +44,9 @@ RUN openssl dhparam -out /etc/postfix/dh1024.pem 1024 \
 # ClamAV
 #
 
-RUN service clamav-daemon restart \
-  ; timeout 3 freshclam \
-  ; rm /var/lib/clamav/mirrors.dat \
- && freshclam
+RUN service clamav-daemon stop
+RUN freshclam
+RUN service clamav-daemon start
 
 #
 # razor & pyzor
