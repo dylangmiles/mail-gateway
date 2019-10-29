@@ -346,7 +346,7 @@ EOF
       echo "$CONFD_CONF_NAME = $CONFD_CONF_VALUE" >> /etc/postfix/main.cf
     done
     
-    echo ""
+    echo >> /etc/postfix/main.cf
     
   fi
   
